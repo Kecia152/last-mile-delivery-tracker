@@ -1,0 +1,11 @@
+{
+  "name": "last-mile-delivery-tracker",
+  "version": "1.0.0",
+  "description": "Simple last-mile delivery tracking system built for logistics assignment",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Student",
+  "license": "ISC"
+}

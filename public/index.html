@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Last-Mile Delivery Tracker</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo" onclick="showTab('home')">
+        <span class="logo-title">Delivery<strong>Tracker</strong></span>
+      </div>
+      <nav class="nav-links">
+        <button class="nav-btn active" id="btn-home" onclick="showTab('home')">Home</button>
+        <button class="nav-btn" id="btn-book" onclick="showTab('book')">Book Shipment</button>
+        <button class="nav-btn" id="btn-track" onclick="showTab('track')">Track Order</button>
+        <button class="nav-btn" id="btn-admin" onclick="showTab('admin')">Admin & Agent Panel</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container">
+    
+    <!-- 1. HOME -->
+    <section id="tab-home" class="tab-pane active">
+      <div class="hero-frame">
+        <div class="hero-card">
+          <div class="hero-nav">
+            <a href="javascript:showTab('home')">Home</a>
+            <a href="javascript:showTab('book')">Services</a>
+            <a href="javascript:showTab('track')">Tracking</a>
+            <a href="javascript:showTab('admin')">Dashboard</a>
+          </div>
+
+          <div class="hero-content">
+            <div class="hero-left">
+              <span class="badge">Logistics Management</span>
+              <h1 class="hero-heading">Delivery</h1>
+              <p class="hero-text">
+                Last-mile delivery tracking with automatic volumetric weight calculation, dynamic zone pricing, delivery agent auto-assignment, and customer rescheduling.
+              </p>
+              <div class="hero-action-buttons">
+                <button onclick="showTab('book')" class="btn-main">BOOK SHIPMENT</button>
+                <button onclick="showTab('track')" class="btn-outline">TRACK ORDER</button>
+              </div>
+
+              <div class="hero-stats">
+                <div class="stat-item">
+                  <strong>(L×B×H)/5000</strong>
+                  <span>Volumetric Wt</span>
+                </div>
+                <div class="stat-item">
+                  <strong>Intra & Inter</strong>
+                  <span>Zone Pricing</span>
+                </div>
+                <div class="stat-item">
+                  <strong>Auto-Assign</strong>
+                  <span>Courier Dispatch</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="hero-right">
+              <div class="art-card">
+                <div class="truck-box">
+                  <div class="truck-label">COURIER SERVICE</div>
+                  <div class="truck-formula">(L×B×H) ÷ 5000</div>
+                </div>
+                <div class="courier-box">
+                  <div class="courier-badge">DELIVERY</div>
+                  <div class="parcel-card">📦 #TRK-PARCEL</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. BOOK SHIPMENT / RATE CALCULATOR VIEW -->
+    <section id="tab-book" class="tab-pane">
+      <div class="white-card">
+        <div class="card-title">
+          <h2>Create New Shipment</h2>
+          <p>Enter parcel details to calculate price and create an order.</p>
+        </div>
+
+        <form id="order-form" onsubmit="handleCreateOrder(event)">
+          <div class="form-layout">
+            
+            <div class="form-inputs">
+              <div class="form-section">
+                <h3>Customer Details</h3>
+                <div class="form-row">
+                  <div class="form-col">
+                    <label>Customer Name</label>
+                    <input type="text" id="cust-name" value="Ananya Roy" required>
+                  </div>
+                  <div class="form-col">
+                    <label>Phone Number</label>
+                    <input type="text" id="cust-phone" value="+91 98100 12345" required>
+                  </div>
+                  <div class="form-col">
+                    <label>Order Type</label>
+                    <select id="order-type" onchange="calculatePrice()">
+                      <option value="B2C">B2C (Retail)</option>
+                      <option value="B2B">B2B (Enterprise)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>Origin & Destination</h3>
+                <div class="form-row">
+                  <div class="form-col">
+                    <label>Pickup Zone</label>
+                    <select id="pickup-zone" onchange="calculatePrice()">
+                      <option value="North Zone">North Zone (Delhi Central)</option>
+                      <option value="South Zone">South Zone (Saket & Gurugram)</option>
+                      <option value="West Zone">West Zone (Rajouri & Janakpuri)</option>
+                      <option value="East Zone">East Zone (Preet Vihar)</option>
+                    </select>
+                    <label style="margin-top:6px;">Pickup Address</label>
+                    <input type="text" id="pickup-address" value="Shop 14, Connaught Place" required>
+                  </div>
+
+                  <div class="form-col">
+                    <label>Drop Zone</label>
+                    <select id="drop-zone" onchange="calculatePrice()">
+                      <option value="South Zone" selected>South Zone (Saket & Gurugram)</option>
+                      <option value="North Zone">North Zone (Delhi Central)</option>
+                      <option value="West Zone">West Zone (Rajouri & Janakpuri)</option>
+                      <option value="East Zone">East Zone (Preet Vihar)</option>
+                    </select>
+                    <label style="margin-top:6px;">Drop Address</label>
+                    <input type="text" id="drop-address" value="Flat 402, South Crest, Saket" required>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-section">
+                <h3>Package Dimensions & Weight</h3>
+                <div class="form-row">
+                  <div class="form-col">
+                    <label>Length (cm)</label>
+                    <input type="number" id="dim-l" value="30" min="1" oninput="calculatePrice()">
+                  </div>
+                  <div class="form-col">
+                    <label>Breadth (cm)</label>
+                    <input type="number" id="dim-b" value="20" min="1" oninput="calculatePrice()">
+                  </div>
+                  <div class="form-col">
+                    <label>Height (cm)</label>
+                    <input type="number" id="dim-h" value="15" min="1" oninput="calculatePrice()">
+                  </div>
+                  <div class="form-col">
+                    <label>Actual Wt (kg)</label>
+                    <input type="number" id="actual-weight" value="1.2" step="0.1" min="0.1" oninput="calculatePrice()">
+                  </div>
+                </div>
+
+                <div class="form-row" style="margin-top:10px;">
+                  <div class="form-col">
+                    <label>Payment Method</label>
+                    <select id="payment-type" onchange="calculatePrice()">
+                      <option value="PREPAID">Prepaid (Paid Online)</option>
+                      <option value="COD">Cash on Delivery (COD)</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Price Breakdown Side Card -->
+            <div class="price-box">
+              <h3>Rate Breakdown</h3>
+              <div class="price-row">
+                <span>Actual Weight:</span>
+                <span id="p-actual-wt">1.20 kg</span>
+              </div>
+              <div class="price-row">
+                <span>Volumetric ((L×B×H)/5000):</span>
+                <span id="p-vol-wt">1.80 kg</span>
+              </div>
+              <div class="price-row highlight">
+                <span>Chargeable Weight:</span>
+                <span id="p-chargeable-wt">1.80 kg</span>
+              </div>
+              <div class="price-row">
+                <span>Zone Scope:</span>
+                <span id="p-zone-type">Inter-Zone</span>
+              </div>
+              <div class="price-row">
+                <span>Base Rate:</span>
+                <span id="p-base-rate">₹90.00</span>
+              </div>
+              <div class="price-row">
+                <span>Extra Weight Charge:</span>
+                <span id="p-extra-rate">₹35.00</span>
+              </div>
+              <div class="price-row">
+                <span>COD Surcharge:</span>
+                <span id="p-cod-rate">₹0.00</span>
+              </div>
+              <div class="price-row">
+                <span>GST Tax (18%):</span>
+                <span id="p-tax-rate">₹22.50</span>
+              </div>
+
+              <div class="total-bar">
+                <small>TOTAL PRICE</small>
+                <strong id="p-total-rate">₹147.50</strong>
+              </div>
+
+              <button type="submit" class="btn-submit-order">CONFIRM & BOOK</button>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- 3. TRACK ORDER  -->
+    <section id="tab-track" class="tab-pane">
+      <div class="white-card">
+        <div class="card-title">
+          <h2>Track Your Shipment</h2>
+          <p>Enter your tracking number to check delivery status.</p>
+        </div>
+
+        <div class="search-bar">
+          <input type="text" id="track-input" placeholder="e.g. TRK-902188" value="TRK-902188">
+          <button onclick="trackOrder(document.getElementById('track-input').value)" class="btn-track-search">Track</button>
+        </div>
+
+        <div class="sample-buttons" id="sample-trk-buttons"></div>
+
+        <div id="tracking-display"></div>
+      </div>
+    </section>
+
+    <!-- 4. ADMIN -->
+    <section id="tab-admin" class="tab-pane">
+      <div class="white-card">
+        <div class="card-title-flex">
+          <div>
+            <h2>Admin & Delivery Agent Panel</h2>
+            <p>Manage all orders, update status, and assign courier agents.</p>
+          </div>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Tracking ID</th>
+              <th>Customer</th>
+              <th>Route</th>
+              <th>Weight</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Assigned Agent</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="orders-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
