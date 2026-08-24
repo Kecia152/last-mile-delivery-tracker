@@ -1,187 +1,141 @@
-Last-Mile Delivery Tracker Platform
+# Last-Mile Delivery Tracker
 
-A delivery management and parcel tracking system built with Node.js, REST APIs, HTML, CSS, and JavaScript.
+A delivery management and tracking web application built with Node.js, HTML, CSS, and JavaScript.
 
-1. Project Overview and Scope
-Logistics operations involve complex pricing rules, dynamic agent assignment, and reliable customer communication. This project implements a delivery management system addressing all core operational requirements:
+---
 
-Rate Calculation Engine: Computes volumetric weight, chargeable weight, intra/inter zone rate cards, and Cash on Delivery (COD) surcharges dynamically.
-Dynamic Auto-Assignment: Matches unassigned orders to the nearest available delivery agent based on zone proximity and workload balancing.
-Delivery Lifecycle Tracking: Provides status updates (Booked, Assigned, Picked Up, In Transit, Out for Delivery, Delivered, Failed) with an immutable audit history.
-Failed Delivery Recovery: Enables customer-driven rescheduling on failed delivery attempts with automatic courier reassignment.
-Role Perspectives: Supports Customer, Delivery Agent, and Admin operations.
-2. Setup and Installation Guide
-Prerequisites
-Node.js (v16.0 or higher)
-Steps to Run Locally
-Clone or navigate to the project directory:
-bash
+## 1. Project Overview
 
-cd last-mile-delivery-tracker
-Start the server:
-bash
+Logistics operations involve pricing calculations, dynamic agent assignments, and customer notifications. This platform provides an end-to-end delivery tracking system:
 
-node server.js
-(Alternatively: npm start)
-Open your web browser and navigate to:
-text
+- Rate Calculation Engine: Calculates volumetric weight, chargeable weight, zone-based pricing (Intra-zone vs Inter-zone for B2B and B2C), and COD surcharges.
+- Agent Auto-Assignment: Automatically matches unassigned shipments to available delivery couriers based on zone proximity.
+- Delivery Lifecycle Tracking: Tracks parcel states (Booked, Assigned, Picked Up, In Transit, Out for Delivery, Delivered, FAILED, Rescheduled) with a timestamped event history.
+- Failed Delivery Rescheduling: Allows customers to select a new delivery date if an attempt fails, automatically reassigning a courier for the next attempt.
+- Role Support: Interface designed for Customer, Delivery Agent, and Admin operations.
 
-http://localhost:3000
-(If port 3000 is occupied by another process, the server automatically binds to port 3001).
-3. Environment Configuration
-Copy .env.example to create your local .env configuration:
+---
 
-env
+## 2. Setup and Running Locally
+
+### Prerequisites
+- Node.js (v16.0 or higher)
+
+### Steps
+1. Navigate to the project directory:
+   cd last-mile-delivery-tracker
+2. Start the application:
+   node server.js
+3. Open your browser and go to:
+   http://localhost:3000
+   (If port 3000 is in use, the server will automatically bind to port 3001).
+
+---
+
+## 3. Environment Variables
+
+Sample configuration is provided in `.env.example`:
 
 PORT=3000
 NODE_ENV=development
-4. Database Architecture and Schema Modeling
-The application utilizes an in-memory document store structure that directly mirrors a production MongoDB / PostgreSQL schema.
 
-Schema Definitions
-1. Orders Collection (orders)
-id (String, Primary Key): Unique order identifier.
-trackingNumber (String, Indexed): Customer-facing tracking code (e.g., TRK-902188).
-customerName (String): Full name of recipient.
-phone (String): Contact phone number.
-orderType (String, Enum: B2C, B2B): Classification of the shipment.
-paymentType (String, Enum: PREPAID, COD): Payment method.
-pickupAddress (String): Origin physical address.
-pickupZone (String): Macro zone of origin (e.g., North Zone).
-dropAddress (String): Destination physical address.
-dropZone (String): Macro zone of destination (e.g., South Zone).
-length (Number): Package length in cm.
-breadth (Number): Package breadth in cm.
-height (Number): Package height in cm.
-actualWeight (Number): Physical scale weight in kg.
-volumetricWeight (Number): Calculated volumetric weight in kg.
-chargeableWeight (Number): Billed weight (max(actualWeight, volumetricWeight)).
-totalPrice (Number): Final billable charge inclusive of taxes.
-status (String, Enum: Booked, Assigned, Picked Up, In Transit, Out for Delivery, Delivered, FAILED, Rescheduled).
-agent (String): Name and vehicle of the assigned delivery agent.
-history (Array of Objects): Immutable timeline events { status, time, note }.
-2. Agents Collection (agents)
-id (String, Primary Key): Agent identifier.
-name (String): Courier full name.
-zone (String): Primary assigned operating zone.
-vehicle (String): Vehicle type (Scooter, Van, Bike, Truck).
-status (String, Enum: Available, Busy).
-activeOrders (Number): Count of currently assigned active packages.
-3. Zones Collection (zones)
-id (String, Primary Key): Unique zone code.
-name (String): Zone descriptor (e.g., North Zone (Delhi Central)).
-areas (Array of Strings): Pincodes and locality names mapped to this zone.
-4. Rate Cards Collection (rate_cards)
-id (String, Primary Key): Rate identifier (e.g., B2C-INTRA, B2C-INTER).
-orderType (String): B2C or B2B.
-zoneScope (String): INTRA (same zone) or INTER (different zones).
-baseRate (Number): Base price for initial weight slab.
-baseWeight (Number): Base weight threshold in kg.
-perExtraKg (Number): Rate charged per additional kg.
-codFee (Number): Surcharge applied for Cash on Delivery orders.
-5. Rate Calculation Engine and Formulas
-Computational Formulas
-Volumetric Weight (IATA Standard): 
-Volumetric Weight (kg)
-=
-Length (cm)
-×
-Breadth (cm)
-×
-Height (cm)
-5000
-Volumetric Weight (kg)= 
-5000
-Length (cm)×Breadth (cm)×Height (cm)
-​
- 
+---
 
-Chargeable Billable Weight: 
-Chargeable Weight
-=
-max
-⁡
-(
-Actual Weight
-,
-Volumetric Weight
-)
-Chargeable Weight=max(Actual Weight,Volumetric Weight)
+## 4. Database Schema and Data Modeling
 
-Zone Resolution:
+The system uses an in-memory document data model matching standard MongoDB and relational database structures.
 
-If 
-Pickup Zone
-=
-=
-Drop Zone
-Pickup Zone==Drop Zone: Applied as Intra-Zone (local direct dispatch).
-If 
-Pickup Zone
-≠
-Drop Zone
-Pickup Zone
-
-=Drop Zone: Applied as Inter-Zone (cross-city transit).
-Tariff Schedules:
+### Data Models
 
-Rate Card Key	Base Rate	Base Weight	Additional / kg	COD Fee
-B2C Intra-Zone	50.00	1.0 kg	20.00	30.00
-B2C Inter-Zone	90.00	1.0 kg	35.00	40.00
-B2B Intra-Zone	40.00	2.0 kg	15.00	25.00
-B2B Inter-Zone	75.00	2.0 kg	25.00	35.00
-Cost Computation: 
-Extra Weight Surcharge
-=
-⌈
-max
-⁡
-(
-0
-,
-Chargeable Weight
-−
-Base Weight
-)
-⌉
-×
-Per Extra Kg Rate
-Extra Weight Surcharge=⌈max(0,Chargeable Weight−Base Weight)⌉×Per Extra Kg Rate 
-Subtotal
-=
-Base Rate
-+
-Extra Weight Surcharge
-+
-COD Surcharge
-Subtotal=Base Rate+Extra Weight Surcharge+COD Surcharge
-Failed to render LaTeX: KaTeX parse error: Unexpected end of input in a macro argument, expected '}' at end of input: …al} \times 0.18
-\text{GST (18%)} = \text{Subtotal} \times 0.18 
-Total Billable Price
-=
-Subtotal
-+
-GST
-Total Billable Price=Subtotal+GST
+#### Orders (`orders`)
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| id | String | Unique identifier |
+| trackingNumber | String | Public tracking code (e.g., TRK-902188) |
+| customerName | String | Recipient customer name |
+| phone | String | Recipient contact number |
+| orderType | String | B2C or B2B |
+| paymentType | String | PREPAID or COD |
+| pickupAddress | String | Origin pickup location |
+| pickupZone | String | Origin zone (e.g., North Zone) |
+| dropAddress | String | Destination drop location |
+| dropZone | String | Destination zone (e.g., South Zone) |
+| length | Number | Package length in cm |
+| breadth | Number | Package breadth in cm |
+| height | Number | Package height in cm |
+| actualWeight | Number | Physical weight in kg |
+| volumetricWeight | Number | Calculated volumetric weight in kg |
+| chargeableWeight | Number | Greater of actual vs volumetric weight |
+| totalPrice | Number | Final billable amount including GST |
+| status | String | Current order status |
+| agent | String | Assigned delivery agent |
+| history | Array | Timeline events with timestamp and note |
 
-6. REST API Documentation
-Method	Endpoint	Description	Request Body
-POST	/api/calculate	Computes volumetric weight and price breakdown	{ length, breadth, height, actualWeight, orderType, pickupZone, dropZone, paymentType }
-GET	/api/orders	Retrieves all registered orders and history	None
-POST	/api/orders	Books a new shipment order	{ customerName, phone, orderType, pickupZone, dropZone, ... }
-POST	/api/orders/update-status	Advances order lifecycle status	{ orderId, status }
-POST	/api/orders/reschedule	Reschedules a failed order for a new date	{ orderId, date }
-POST	/api/orders/assign	Automatically assigns an agent based on zone	{ orderId }
-7. Pre-Configured Test Scenarios
-Delivered Order (#TRK-902188): Demonstrates a complete lifecycle from booking to delivery by Priya Patel.
-Failed Attempt (#TRK-741903): Demonstrates the failure recovery flow. Visit the Track Order tab and use the date selector to reschedule.
-Pending Booking (#TRK-229410): Demonstrates unassigned state ready for agent assignment in the Admin panel.
-8. Deployment
-To deploy to any cloud platform (e.g., Render, Railway, Vercel):
+#### Agents (`agents`)
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| name | String | Courier agent full name |
+| zone | String | Primary operational zone |
+| vehicle | String | Transport mode (Scooter, Van, Bike, Truck) |
+| status | String | Availability state (Available, Busy) |
 
-Push this repository to GitHub.
-Link the repository to your hosting provider.
-Set the build command to empty and start command to:
-bash
+#### Zones (`zones`)
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| id | String | Zone identifier (e.g., zone-north) |
+| name | String | Zone title (e.g., North Zone) |
+| areas | Array | Covered localities and postal areas |
 
-node server.js
+---
+
+## 5. Rate Calculation Logic and Formulas
+
+### Formulas
+- Volumetric Weight (kg) = (Length × Breadth × Height) / 5000
+- Chargeable Weight = max(Actual Weight, Volumetric Weight)
+- Zone Scope:
+  - Intra-Zone (Pickup Zone == Drop Zone): Local rate
+  - Inter-Zone (Pickup Zone != Drop Zone): Transit rate
+
+### Pricing Card Matrix
+| Category | Scope | Base Rate | Base Weight | Extra / kg | COD Fee |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| B2C | Intra-Zone | Rs. 50.00 | 1.0 kg | Rs. 20.00 | Rs. 30.00 |
+| B2C | Inter-Zone | Rs. 90.00 | 1.0 kg | Rs. 35.00 | Rs. 40.00 |
+| B2B | Intra-Zone | Rs. 40.00 | 2.0 kg | Rs. 15.00 | Rs. 25.00 |
+| B2B | Inter-Zone | Rs. 75.00 | 2.0 kg | Rs. 25.00 | Rs. 35.00 |
+
+### Cost Calculation Steps
+1. Extra Weight Charge = ceil(max(0, Chargeable Weight - Base Weight)) × Per Extra Kg Rate
+2. Subtotal = Base Rate + Extra Weight Charge + COD Fee
+3. GST (18%) = Subtotal × 0.18
+4. Total Price = Subtotal + GST
+
+---
+
+## 6. REST API Documentation
+
+| Method | Route | Description |
+| :--- | :--- | :--- |
+| POST | /api/calculate | Computes volumetric weight and price breakdown |
+| GET | /api/orders | Returns all orders and tracking history |
+| POST | /api/orders | Creates a new delivery shipment |
+| POST | /api/orders/update-status | Updates shipment lifecycle status |
+| POST | /api/orders/reschedule | Reschedules a failed order for a new date |
+| POST | /api/orders/assign | Auto-assigns an agent based on zone match |
+
+---
+
+## 7. Sample Test Scenarios
+
+- Delivered Shipment (#TRK-902188): Demonstrates complete lifecycle to successful delivery.
+- Failed Delivery (#TRK-741903): Demonstrates failed attempt and customer reschedule date selection.
+- New Booking (#TRK-229410): Demonstrates unassigned booking ready for agent auto-assignment.
+
+---
+
+## 8. Deployment
+
+To deploy on Render, Railway, or Vercel:
+1. Connect your GitHub repository.
+2. Set the start command to: node server.js
