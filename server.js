@@ -307,13 +307,11 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// Start Server with port fallback
+
 function start(portToTry) {
   server.listen(portToTry, () => {
-    console.log(`\n======================================================`);
-    console.log(`🚚 Last-Mile Delivery Tracker running at:`);
-    console.log(`👉 http://localhost:${portToTry}`);
-    console.log(`======================================================\n`);
+    console.log(`Last-Mile Delivery Tracker running at:`);
+    console.log(`http://localhost:${portToTry}`);
   });
 
   server.on('error', err => {
@@ -324,6 +322,6 @@ function start(portToTry) {
       console.error(err);
     }
   });
-}
 
+}
 start(PORT);
